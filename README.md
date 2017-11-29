@@ -4,14 +4,14 @@
 使用方法：
 xml文件内添加
 ```
-<com.example.videoview.view.MyVideoView
+<com.example.mvideoview.MyVideoView
         android:id="@+id/videoview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 ```
 或者
 ```
-<com.example.videoview.view.MyTextureVideoView
+<com.example.mvideoview.MyTextureVideoView
         android:id="@+id/videoview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

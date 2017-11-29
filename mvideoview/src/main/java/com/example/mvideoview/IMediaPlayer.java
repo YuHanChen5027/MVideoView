@@ -1,4 +1,4 @@
-package com.example.videoview.view;
+package com.example.mvideoview;
 
 import android.media.MediaPlayer;
 

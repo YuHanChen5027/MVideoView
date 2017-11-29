@@ -1,24 +1,23 @@
-package com.example.videoview.view;
+package com.example.mvideoview;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Surface;
-import android.view.TextureView;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 
 import java.io.IOException;
 
 /**
- * Created by Chenyuhan on 2017/11/10.
+ * Created by Chenyuhan on 2017/11/28.
  */
 
-public class MyTextureVideoView extends TextureView implements IMediaPlayer {
-    private final String TAG = MyTextureVideoView.class.getSimpleName();
+public class MyVideoView extends SurfaceView implements IMediaPlayer {
+    private final String TAG = MyVideoView.class.getSimpleName();
     private Context mContext;
     private MediaPlayer mMediaPlayer;
     private Uri mUri;
@@ -27,6 +26,7 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
      * 当前控件状态
      */
     private int mCurrentState = STATE_IDLE;
+
     /**
      * 控件状态类型(依次是：错误，空闲，准备，准备完成，播放，暂停，播放完成)
      */
@@ -48,15 +48,10 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
 
     public void setVolumeNumber(float volumeNumber) {
         this.volumeNumber = volumeNumber;
-        if (mMediaPlayer != null)
+        if (mMediaPlayer != null) {
             mMediaPlayer.setVolume(volumeNumber, volumeNumber);
+        }
     }
-
-
-    /**
-     * 跳转进度
-     */
-    private int mSeekWhenPrepared = 0;
 
     /**
      * 播放进度监听
@@ -67,24 +62,25 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
      * 错误监听监听
      */
     private IMediaPlayer.OnErrorListener mOnErrorListener;
+
     /**
      * 事件发生监听
      */
     private IMediaPlayer.OnInfoListener mOnInfoListener;
 
-    public MyTextureVideoView(Context context) {
+    public MyVideoView(Context context) {
         super(context);
         this.mContext = context;
         init();
     }
 
-    public MyTextureVideoView(Context context, AttributeSet attrs) {
+    public MyVideoView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.mContext = context;
         init();
     }
 
-    public MyTextureVideoView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public MyVideoView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         this.mContext = context;
         init();
@@ -95,30 +91,24 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
         if (mMediaPlayer == null) {
             initMediaPLayer();
         }
-        this.setSurfaceTextureListener(new SurfaceTextureListener() {
+        this.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                // surfaceTexture数据通道准备就绪，打开播放器
+            public void surfaceCreated(SurfaceHolder holder) {
                 if (mMediaPlayer != null) {
-                    bindSurfaceHolder(mMediaPlayer, surface);
+                    bindSurfaceHolder(mMediaPlayer, holder);
                 } else {
-                    openVideo(surface);
+                    openVideo();
                 }
                 mOnProgressListener.onSurfaceCreated();
             }
 
             @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
             }
 
             @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                return false;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+            public void surfaceDestroyed(SurfaceHolder holder) {
 
             }
         });
@@ -137,17 +127,16 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
         mMediaPlayer.setOnErrorListener(mErrorListener);
         //事件发生回调
         mMediaPlayer.setOnInfoListener(mInfoListener);
-
         //设置禁止锁屏，保持常亮
         mMediaPlayer.setScreenOnWhilePlaying(true);
 
     }
 
     /**
-     * 开启Video
+     * 开启视频
      */
-    private void openVideo(SurfaceTexture surface) {
-        if (mUri == null && surface == null) {
+    private void openVideo() {
+        if (mUri == null && this.getHolder() == null) {
             return;
         }
         if (mMediaPlayer == null) {
@@ -157,12 +146,12 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
             mMediaPlayer.reset();
         }
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
         // 设置需要播放的视频
         try {
             mMediaPlayer.setDataSource(mContext, mUri);
-            bindSurfaceHolder(mMediaPlayer, surface);
+            bindSurfaceHolder(mMediaPlayer, getHolder());
             mMediaPlayer.prepareAsync();
-            start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -181,13 +170,9 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
                 //总进度回调
                 mOnProgressListener.onTotleProgressListener(duration);
             }
-            int seekToPosition = mSeekWhenPrepared;
-            if (seekToPosition != 0) {
-                seekTo(seekToPosition);
-            }
             if (mOnProgressListener != null) {
                 //加载完成回调
-                mOnProgressListener.onPreparedListener(MyTextureVideoView.this);
+                mOnProgressListener.onPreparedListener(MyVideoView.this);
                 //设置音量
                 mMediaPlayer.setVolume(volumeNumber, volumeNumber);
             }
@@ -217,8 +202,7 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
             //隐藏当前view
-            MyTextureVideoView.this.setVisibility(GONE);
-            Log.e(TAG, "Error: " + what + "," + extra);
+            MyVideoView.this.setVisibility(GONE);
             mCurrentState = STATE_ERROR;
                     /* If an error handler has been supplied, use it and finish. */
             if (mOnErrorListener != null) {
@@ -277,15 +261,15 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
     };
 
 
-    private void bindSurfaceHolder(MediaPlayer mediaPlayer, SurfaceTexture surface) {
+    private void bindSurfaceHolder(MediaPlayer mediaPlayer, SurfaceHolder surfaceHolder) {
         if (mediaPlayer == null) {
             return;
         }
-        if (surface == null) {
+        if (surfaceHolder == null) {
             mediaPlayer.setDisplay(null);
             return;
         }
-        mediaPlayer.setSurface(new Surface(surface));
+        mediaPlayer.setDisplay(surfaceHolder);
     }
 
     /**
@@ -295,7 +279,7 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
      */
     public void setVideoURI(Uri uri) {
         this.mUri = uri;
-        openVideo(getSurfaceTexture());
+        openVideo();
     }
 
 
@@ -305,7 +289,7 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
     public void setVideoURL(String url) {
         Uri uriFromUrl = Uri.parse(url);
         this.mUri = uriFromUrl;
-        openVideo(getSurfaceTexture());
+        openVideo();
     }
 
     private boolean isInPlaybackState() {
@@ -320,7 +304,6 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
         if (isInPlaybackState()) {
             mMediaPlayer.start();
             mCurrentState = STATE_PLAYING;
-
             handler.post(progressRunnable);
         }
     }
@@ -328,11 +311,9 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
     @Override
     public void pause() {
         if (isInPlaybackState()) {
-            if (mMediaPlayer.isPlaying()) {
-                mMediaPlayer.pause();
-                mCurrentState = STATE_PAUSED;
-                handler.removeCallbacks(progressRunnable);
-            }
+            mMediaPlayer.pause();
+            mCurrentState = STATE_PAUSED;
+            handler.removeCallbacks(progressRunnable);
         }
     }
 
@@ -353,22 +334,9 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
     }
 
     @Override
-    public float getVideoWidth() {
-        return mMediaPlayer.getVideoWidth();
-    }
-
-    @Override
-    public float getVideoHeight() {
-        return mMediaPlayer.getVideoHeight();
-    }
-
-    @Override
     public void seekTo(int pos) {
         if (isInPlaybackState()) {
             mMediaPlayer.seekTo(pos);
-            mSeekWhenPrepared = 0;
-        } else {
-            mSeekWhenPrepared = pos;
         }
     }
 
@@ -385,6 +353,16 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
             mMediaPlayer = null;
             mCurrentState = STATE_IDLE;
         }
+    }
+
+    @Override
+    public float getVideoWidth() {
+        return mMediaPlayer.getVideoWidth();
+    }
+
+    @Override
+    public float getVideoHeight() {
+        return mMediaPlayer.getVideoHeight();
     }
 
     public OnProgressListener getmOnProgressListener() {
@@ -411,6 +389,8 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
         this.mOnInfoListener = mOnInfoListener;
     }
 
+
+
     /**
      * 用来刷新进度条的handler
      */
@@ -425,4 +405,5 @@ public class MyTextureVideoView extends TextureView implements IMediaPlayer {
             handler.postDelayed(progressRunnable, 1000);
         }
     };
+
 }

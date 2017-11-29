@@ -3,8 +3,8 @@ package com.example.videoview;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import com.example.videoview.view.IMediaPlayer;
-import com.example.videoview.view.MyVideoView;
+import com.example.mvideoview.IMediaPlayer;
+import com.example.mvideoview.MyVideoView;
 
 
 public class MainActivity extends AppCompatActivity {

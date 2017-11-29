@@ -1,5 +1,5 @@
 # VideoView
-自封装MediaPlayer+SurfaceVIew 播放控件
+自封装MediaPlayer+SurfaceVIew 和TextureView 播放控件
 
 使用方法：
 xml文件内添加
